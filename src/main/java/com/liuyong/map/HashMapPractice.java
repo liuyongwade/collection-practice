@@ -1,5 +1,9 @@
 package com.liuyong.map;
 
-public class HashMapPractice {
+import java.util.HashMap;
 
+public class HashMapPractice {
+	public static void method1() {
+		new HashMap<String, String>();
+	}
 }
