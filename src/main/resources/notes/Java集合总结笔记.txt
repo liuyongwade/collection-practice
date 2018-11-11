@@ -1,0 +1,44 @@
+ArrayList与 LinkedList区别 ?
+	存储结构上 ArrayList底层使用数组进行元素的存储，LinkedList使用双向链表作为存储结构。
+	两者均与允许存储 null 也允许存储重复元素。
+	在性能上 ArrayList 在存储大量元素时候的增删效率 平均低于 LinkedList，因为 ArrayList 在增删的是需要拷贝元素到新的数组，而 LinkedList 只需要将节点前后指针指向改变。
+	在根据角标获取元素的时间效率上ArrayList优于 LinkedList，因为数组本身有存储连续，有 index 角标，而 LinkedList 存储元素离散，需要遍历链表。
+	不要使用 for 循环去遍历 LinkedList 因为效率很低。
+	两者都是线程不安全的，都可以使用 Collections.synchronizedList(List<E> list) 方法生成一个线程安全的 List。
+
+ArrayList与 Vector区别（为什么要用Arraylist取代Vector呢？）
+	ArrayList 的扩容机制由于 Vector ， ArrayList 每次 resize 增加 1.5 倍的容量，Vector 每次增加 2倍的容量，在存储大量元素后扩容的时候就能有很大的空间节省。
+	Vector 添加删除方法以及迭代器遍历的方法都是 synchronized 修饰的方法，在线程安全的情况下使用效率低于 ArrayList
+	ArrayList 和 LinkedList 通过Collections.synchronizedList(List<E> list) 的线程同步的集合，迭代器并不同步，需要使用者去加锁。
+
+简述 HashMap 的工作原理 JDK 1.8后做了哪些优化
+	JDK 1.7 HashMap 底层采用单链表 + 数组的存储结构存储元素（键值对）。JDK1.8之后 HashMap 在同一哈希桶中节点数量（单链表长度）超过 8之后会使用 红黑树替换单链表来提高效率
+	HashMap 通过键值对的 key 的 hashCode 值经过扰动函数处理后确定存储的数组角标位置，1.7 中扰动函数使用了 4次位运算 + 5次异或运算，1.8 中降低到 1次位运算 + 1次异或运运算
+	HashMap 扩容的时候会增加原来数组长度两倍，并对所存储的元素节点hash 值的重新计算，1.7中 HashMap 会重新调用 hash 函数计算新的位置，而 1.8中对此进行了优化通过 (e.hash & oldCap) == 0 来确定节点新位置是位于扩容前的角标还是之前的 2倍角标位置。
+	HashMap 在多线程使用前提下，扩容的时候可能会导致循环链表的情况，当然我们不应在线程不安全的情况下使用 HashMap
+	
+HashMap和 HashTable的区别
+	HashMap 是线程不安全的，HashTable是线程安全的。
+	HashMap 允许 key 和 Vale 是 null，但是只允许一个 key 为 null,且这个元素存放在哈希表 0 角标位置。 HashTable 不允许key、value 是 null
+	HashMap 内部使用hash(Object key)扰动函数对 key 的 hashCode 进行扰动后作为 hash 值。HashTable 是直接使用 key 的 hashCode() 返回值作为 hash 值。
+	HashMap默认容量为 2^4 且容量一定是 2^n ; HashTable 默认容量是11,不一定是 2^n
+	HashTable 取哈希桶下标是直接用模运算,扩容时新容量是原来的2倍+1。HashMap 在扩容的时候是原来的两倍，且哈希桶的下标使用 &运算代替了取模。
+
+HashMap和 LinkedHashMap的区别
+	LinkedHashMap 拥有与 HashMap 相同的底层哈希表结构，即数组 + 单链表 + 红黑树，也拥有相同的扩容机制。
+	LinkedHashMap 相比 HashMap 的拉链式存储结构，内部额外通过 Entry 维护了一个双向链表。
+	HashMap 元素的遍历顺序不一定与元素的插入顺序相同，而 LinkedHashMap 则通过遍历双向链表来获取元素，所以遍历顺序在一定条件下等于插入顺序。
+	LinkedHashMap 可以通过构造参数 accessOrder 来指定双向链表是否在元素被访问后改变其在双向链表中的位置。
+
+HashSet如何检查重复？与 HashMap的关系？
+	HashSet 内部使用 HashMap 存储元素，对应的键值对的键为 Set 的存储元素，值为一个默认的 Object 对象。
+	HashSet 通过存储元素的 hashCode 方法和 equals 方法来确定元素是否重复。
+
+是否了解 fast-fail规则 简单说明一下
+	快速失败（fail—fast）在用迭代器遍历一个集合对象时，如果遍历过程中集合对象中的内容发生了修改（增加、删除、修改），则会抛出ConcurrentModificationException。
+	迭代器在遍历时直接访问集合中的内容，并且在遍历过程中使用一个 modCount 变量。集合在被遍历期间如果内容发生变化，就会改变 modCount 的值。每当迭代器使用hasNext()/next() 遍历下一个元素之前，都会检测 modCount 变量是否为expectedmodCount 值，是的话就返回遍历值；否则抛出异常，终止遍历。
+
+	场景：java.util包下的集合类都是快速失败的，不能在多线程下发生并发修改（迭代过程中被修改）。
+	集合在遍历过程中是否可以删除元素，为什么迭代器就可以安全删除元素
+	集合在使用 for 循环或者高级 for 循环迭代的过程中不允许使用，集合本身的 remove 方法删除元素，如果进行错误操作将会导致 ConcurrentModificationException异常的发生
+	Iterator 可以删除访问的当前元素(current)，一旦删除的元素是Iterator 对象中 next 所正在引用的，在 Iterator 删除元素通过 修改 modCount 与 expectedModCount 的值，可以使下次在调用 remove 的方法时候两者仍然相同因此不会有异常产生。

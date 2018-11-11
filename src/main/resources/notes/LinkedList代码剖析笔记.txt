@@ -2,8 +2,7 @@ package java.util;
 
 import java.util.function.Consumer;
 
-//LinkedList基于链表实现
-//实现了List、Deque、Cloneable、Serializable接口
+//LinkedList基于链表，实现了List、Deque、Cloneable、Serializable接口
 public class LinkedList<E> extends AbstractSequentialList<E>
     implements List<E>, Deque<E>, Cloneable, java.io.Serializable {
 	//list链表的长度
