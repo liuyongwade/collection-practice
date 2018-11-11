@@ -1,0 +1,36 @@
+package java.util;
+
+//LinkedHashSet继承自HashSet，内部使用的是LinkHashMap,好处是LinkedHashSet中的元素顺序是可以保证的，即遍历顺序和插入顺序是一致的。
+//LinkedHashSet底层是 数组 + 单链表 + 红黑树 + 双向链表的数据结构
+public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable, java.io.Serializable {
+
+    private static final long serialVersionUID = -2851667679971038690L;
+
+    //调用HashSet中的LinkedHashMap
+    public LinkedHashSet(int initialCapacity, float loadFactor) {
+        super(initialCapacity, loadFactor, true);
+    }
+
+    //调用HashSet中的 LinkedHashMap 的构造方法，该方法初始化了初始起始容量，以及加载因子，
+    //dummy 参数没有作用这里可以忽略，在HashSet中只是为了区别其他的构造方法而已
+    public LinkedHashSet(int initialCapacity) {
+        super(initialCapacity, .75f, true);
+    }
+
+    //初始化 LinkedHashMap 的初始容量为诶 16 加载因子为 0.75f
+    public LinkedHashSet() {
+        super(16, .75f, true);
+    }
+
+    //初始化 LinkedHashMap 的初始容量为 Math.max(2*c.size(), 11) 加载因子为 0.75f 
+    public LinkedHashSet(Collection<? extends E> c) {
+        super(Math.max(2*c.size(), 11), .75f, true);
+        addAll(c);
+    }
+
+    //
+    @Override
+    public Spliterator<E> spliterator() {
+        return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.ORDERED);
+    }
+}

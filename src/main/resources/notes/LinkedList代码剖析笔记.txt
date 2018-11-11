@@ -15,7 +15,7 @@ public class LinkedList<E> extends AbstractSequentialList<E>
     //list链表的最后一个结点
     transient Node<E> last;
 
-    ////list链表的无参构造方法，什么事情都不做
+    //list链表的无参构造方法，什么事情都不做
     public LinkedList() {
     }
 
