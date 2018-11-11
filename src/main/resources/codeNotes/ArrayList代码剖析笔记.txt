@@ -15,7 +15,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     //空数组，当调用无参构造方法的时候，默认给一个空数组，所有实例共享的一个静态属性，当初始化容量为0的时候，就使用这个属性作为实例底层数组
     private static final Object[] EMPTY_ELEMENTDATA = {};
 
-    //
+    //构造一个空的对象数组，用来与EMPTY_ELEMENTDATA这个数组进行对比，
+    //来确定当第一次向ArrayList中添加数据时，应该如果进行扩容，就是增加多大的容量
     private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 
     //真正保存数据的数组，所以说ArrayList是用数组来实现的
@@ -107,18 +108,14 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     private void grow(int minCapacity) {
         //获取当前数组的容量
         int oldCapacity = elementData.length;
-        
         //在当前数组容量的大小情况下，扩容50%
         int newCapacity = oldCapacity + (oldCapacity >> 1);
-        
         //当扩容后的容量大小 还是小于最小容量，新的数组容量就采用最小容量的长度
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
-            
         //处理新数组容量大于MAX_ARRAY_SIZE
         if (newCapacity - MAX_ARRAY_SIZE > 0)
             newCapacity = hugeCapacity(minCapacity);
-            
         //调用系统的copyOf方法，先开辟一个newCapacity的数组，然后把之前的旧数组的数据复制到新数组
         elementData = Arrays.copyOf(elementData, newCapacity);
     }
@@ -246,16 +243,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     public void add(int index, E element) {
     	//首先检查index是否可以使用
         rangeCheckForAdd(index);
-
 		//确保数组可容纳
         ensureCapacityInternal(size + 1);  // Increments modCount!!
-        
        	//随后调用System.arraycopy方法，将elementData的index位置元素依次向后移动，为接下来的插入预留空间
         System.arraycopy(elementData, index, elementData, index + 1, size - index);
-        
         //插入数据
         elementData[index] = element;
-        
         size++;
     }
 
@@ -263,19 +256,15 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     public E remove(int index) {
     	//下标检查
         rangeCheck(index);
-
         modCount++;
         //暂时保留旧值
         E oldValue = elementData(index);
-		
 		//从index+1位置开始的numMoved个元素，全部向前移动一位
         int numMoved = size - index - 1;
         if (numMoved > 0)
             System.arraycopy(elementData, index+1, elementData, index, numMoved);
-            
         //最后一位设置为null                
         elementData[--size] = null;
-        
 		//返回被删除的值
         return oldValue;
     }
@@ -332,15 +321,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     //指定index位置插入集合C中的全部元素，原来位置的元素依次向后移动
     public boolean addAll(int index, Collection<? extends E> c) {
         rangeCheckForAdd(index);
-
         Object[] a = c.toArray();
         int numNew = a.length;
         ensureCapacityInternal(size + numNew);  
-
         int numMoved = size - index;
         if (numMoved > 0)
             System.arraycopy(elementData, index, elementData, index + numNew, numMoved);
-
         System.arraycopy(a, 0, elementData, index, numNew);
         size += numNew;
         return numNew != 0;
@@ -351,7 +337,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         modCount++;
         int numMoved = size - toIndex;
         System.arraycopy(elementData, toIndex, elementData, fromIndex, numMoved);
-
         int newSize = size - (toIndex-fromIndex);
         for (int i = newSize; i < size; i++) {
             elementData[i] = null;
@@ -382,31 +367,34 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         return batchRemove(c, false);
     }
 
-    //保留当前容器与c的并集
+    //保留当前容器与c的交集
     public boolean retainAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return batchRemove(c, true);
     }
 
+	//批量删除方法，complement为true表示求交集，如果为false表示在elementData中保留原有的非c的集合
+    //也即true: a属于elementData同时a属于c; false: a属于elementData同时a不属于c
     private boolean batchRemove(Collection<?> c, boolean complement) {
         final Object[] elementData = this.elementData;
         int r = 0, w = 0;
         boolean modified = false;
         try {
+        	//一个读的index,一个是写的index,
+        	//因为每次都是把elementData数组拿来遍历，
+        	//注意complement是true还是false，
+        	//比方：complement为true: a属于elementData同时a属于c; false: a属于elementData同时a不属于c
             for (; r < size; r++)
                 if (c.contains(elementData[r]) == complement)
                     elementData[w++] = elementData[r];
         } finally {
-            // Preserve behavioral compatibility with AbstractCollection,
-            // even if c.contains() throws.
+            // 当c.contains()方法抛出异常的时候，就中断遍历，然后把从下标r开始的元素到结尾，全部移动到新数组的末尾接上。
             if (r != size) {
-                System.arraycopy(elementData, r,
-                                 elementData, w,
-                                 size - r);
+                System.arraycopy(elementData, r,elementData, w, size - r);
                 w += size - r;
             }
+            //清理数组中不需要的引用
             if (w != size) {
-                // clear to let GC do its work
                 for (int i = w; i < size; i++)
                     elementData[i] = null;
                 modCount += size - w;
@@ -417,7 +405,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         return modified;
     }
 
-    //
+    //序列化：保存数组实例的状态到一个流
     private void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException{
         // Write out element count, and any hidden stuff
@@ -437,23 +425,17 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         }
     }
 
-    //
+    //反序列化：从一个流中读出数组实例的状态
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
         elementData = EMPTY_ELEMENTDATA;
-
-        // Read in size, and any hidden stuff
         s.defaultReadObject();
-
-        // Read in capacity
-        s.readInt(); // ignored
-
+        s.readInt();
         if (size > 0) {
             // be like clone(), allocate array based upon size not capacity
             int capacity = calculateCapacity(elementData, size);
             SharedSecrets.getJavaOISAccess().checkArray(s, Object[].class, capacity);
             ensureCapacityInternal(size);
-
             Object[] a = elementData;
             // Read in all elements in the proper order.
             for (int i=0; i<size; i++) {
@@ -463,6 +445,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     }
 
 
+	//返回一个list迭代器，链表迭代器，可以双向迭代，还具有add方法，
+	//但是只有在list类型中才可以使用，别的集合类没有
+    //接受一个Index，确定迭代器初始的位置
     public ListIterator<E> listIterator(int index) {
         if (index < 0 || index > size)
             throw new IndexOutOfBoundsException("Index: "+index);
@@ -478,39 +463,46 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         return new Itr();
     }
 
- 
+ 	//AbstractList.Itr的优化版本迭代器
     private class Itr implements Iterator<E> {
-        int cursor;       // index of next element to return
-        int lastRet = -1; // index of last element returned; -1 if no such
+        int cursor;       // 下一个要被返回的元素下标
+        int lastRet = -1; // 上一个要被返回的元素下标，如果没有，就默认为-1
         int expectedModCount = modCount;
 
         Itr() {}
-
+        
+		//判断是否还有下一个元素
         public boolean hasNext() {
             return cursor != size;
         }
 
+		//返回下一个元素，默认一开始的next是第一个元素
         @SuppressWarnings("unchecked")
         public E next() {
+        	//快速失败检测
             checkForComodification();
             int i = cursor;
+            //会判断一次位置是否合法，因为cursor只是盲目的+1
             if (i >= size)
                 throw new NoSuchElementException();
             Object[] elementData = ArrayList.this.elementData;
             if (i >= elementData.length)
                 throw new ConcurrentModificationException();
-            cursor = i + 1;
-            return (E) elementData[lastRet = i];
+            cursor = i + 1;//cursor设置为下一个要被返回的元素下标
+            return (E) elementData[lastRet = i];//将lastRet设置为被返回的元素下标
         }
 
+		//删除上一个元素
         public void remove() {
             if (lastRet < 0)
                 throw new IllegalStateException();
             checkForComodification();
 
             try {
-                ArrayList.this.remove(lastRet);
-                cursor = lastRet;
+                ArrayList.this.remove(lastRet);//删除的是下标为lastRet元素
+                cursor = lastRet;//回退
+                //设置成为-1，也即不能连续的删除，该类不能够往回走，
+                //只能继续前进，因为继续删除，会抛出IllegalStateException异常
                 lastRet = -1;
                 expectedModCount = modCount;
             } catch (IndexOutOfBoundsException ex) {
@@ -518,6 +510,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
             }
         }
 
+		//遍历余下的元素
         @Override
         @SuppressWarnings("unchecked")
         public void forEachRemaining(Consumer<? super E> consumer) {
@@ -531,6 +524,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
             if (i >= elementData.length) {
                 throw new ConcurrentModificationException();
             }
+            ////此处接受elementData元素，执行consumer中的方法，可能会去改变elementData元素
             while (i != size && modCount == expectedModCount) {
                 consumer.accept((E) elementData[i++]);
             }
@@ -546,7 +540,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         }
     }
 
-   
+   	//一个对AbstractList.ListItr的优化版本链表迭代器
     private class ListItr extends Itr implements ListIterator<E> {
         ListItr(int index) {
             super();
@@ -564,7 +558,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         public int previousIndex() {
             return cursor - 1;
         }
-
+		
+		//返回上一个元素
         @SuppressWarnings("unchecked")
         public E previous() {
             checkForComodification();
@@ -578,6 +573,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
             return (E) elementData[lastRet = i];
         }
 
+		//更新上一个位置的元素，将其置换成e
         public void set(E e) {
             if (lastRet < 0)
                 throw new IllegalStateException();
@@ -590,6 +586,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
             }
         }
 
+		//新增一个元素，处在上一个元素之后，下一个元素之前，会移动数组
         public void add(E e) {
             checkForComodification();
 
@@ -605,12 +602,13 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         }
     }
 
-	//
+	//得到从fromIndex~toIndex位置的子列表
     public List<E> subList(int fromIndex, int toIndex) {
         subListRangeCheck(fromIndex, toIndex, size);
         return new SubList(this, 0, fromIndex, toIndex);
     }
 
+	//判断Index是否合法
     static void subListRangeCheck(int fromIndex, int toIndex, int size) {
         if (fromIndex < 0)
             throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
@@ -620,12 +618,18 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
             throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
     }
 
+	//继承与AbstractList的SubList类，其实这个类，只是去封装了几个属性，实际上用的还是原来ArrayList类的数组，外观模式
     private class SubList extends AbstractList<E> implements RandomAccess {
         private final AbstractList<E> parent;
         private final int parentOffset;
         private final int offset;
         int size;
 
+		//参数：
+        //parent 父类型
+        //offset 父类型的偏移量
+        //fromIndex 子列表的开始元素，位于父列表的位置
+        //toIndex 子列表的结束元素，位于父列表的位置
         SubList(AbstractList<E> parent,
                 int offset, int fromIndex, int toIndex) {
             this.parent = parent;
@@ -851,6 +855,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         }
     }
 
+	//与forEachRemaining很像，一个是迭代所有，一个是迭代剩余，都会去执行Consumer中定义的方法，可能会改变元素的值
     @Override
     public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
@@ -866,33 +871,33 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         }
     }
 
-    //
+    //返回spliterator,用于并行计算中，splitable iterator可分割迭代器
     @Override
     public Spliterator<E> spliterator() {
         return new ArrayListSpliterator<>(this, 0, -1, 0);
     }
 
-    /** Index-based split-by-two, lazily initialized Spliterator */
+    
     static final class ArrayListSpliterator<E> implements Spliterator<E> {
 
-        private final ArrayList<E> list;
+        private final ArrayList<E> list;//原数组
         private int index; // current index, modified on advance/split
         private int fence; // -1 until used; then one past last index
         private int expectedModCount; // initialized when fence set
 
-        /** Create new spliterator covering the given  range */
-        ArrayListSpliterator(ArrayList<E> list, int origin, int fence,
-                             int expectedModCount) {
+        
+        ArrayListSpliterator(ArrayList<E> list, int origin, int fence,int expectedModCount) {
             this.list = list; // OK if null unless traversed
             this.index = origin;
             this.fence = fence;
             this.expectedModCount = expectedModCount;
         }
 
+		// 第一次使用时，初始化fence大小
         private int getFence() { // initialize fence to size on first use
             int hi; // (a specialized variant appears in method forEach)
             ArrayList<E> lst;
-            if ((hi = fence) < 0) {
+            if ((hi = fence) < 0) {//-1表示初始化的值
                 if ((lst = list) == null)
                     hi = fence = 0;
                 else {
@@ -998,6 +1003,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         return anyToRemove;
     }
 
+	//替换所有
     @Override
     @SuppressWarnings("unchecked")
     public void replaceAll(UnaryOperator<E> operator) {
@@ -1013,6 +1019,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
         modCount++;
     }
 
+	//排序
     @Override
     @SuppressWarnings("unchecked")
     public void sort(Comparator<? super E> c) {
