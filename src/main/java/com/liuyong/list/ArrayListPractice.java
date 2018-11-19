@@ -1,6 +1,7 @@
 package com.liuyong.list;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -58,11 +59,13 @@ public class ArrayListPractice {
 	// 测试构造方法
 	public static void method2() {
 		// 无参构造
-		List<String> list1 = new ArrayList<String>();
+		List<Integer> list1 = new ArrayList<Integer>();
+		System.out.println(list1);
 		// 指定长度的构造方法
 		List<String> list2 = new ArrayList<String>(20); // 设置负数
 		// 复制指定Collection的数值到新数组中
-		List<String> list3 = new ArrayList<String>(list2);
+		List<String> list3 = new ArrayList<String>(Arrays.asList("11", "22"));
+		System.out.println(list3);
 	}
 
 	public static void method3() {
