@@ -11,3 +11,18 @@
 6、SpringCloud、Redis、Docker、Zookeeper
 
 7、微信小程序：本地
+
+
+整体安排：
+1、基础：集合、多线程、IO流、反射、JVM、GC、设计模式
+
+2、高级：Spring（AOP、事务）、SpringMVC、SpringBoot、Shiro、MyBatis（MyBatis Plus、PageHelper、Mapper）、Hibernate、SpringCloud、Doubbo、Zookeeper
+
+3、Linux、Nginx、网站部署、高并发、分布式、集群、秒杀项目、P2P理财项目、房产项目、高并发项目
+
+4、工具：Maven、Gradle、Git、SVN、Junit、IDEA
+
+5、数据库：MySQL、Oracle、SQL优化、MongoDB、Redis、Memcache、Hazelcast
+
+6、前端：JQuery、DIV+CSS
+
