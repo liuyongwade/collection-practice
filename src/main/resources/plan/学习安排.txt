@@ -1,4 +1,4 @@
-1、多线程：腾讯课堂、本地
+1、多线程：腾讯课堂（已完成）、本地
 
 2、Git：本地（已完成）
 
@@ -6,7 +6,7 @@
 
 4、Linux深入学习、系统上线等（腾讯课程）
 
-5、springboot源码剖析：本地
+5、Spring源码剖析（本地）、Springboot源码剖析（本地）
 
 6、SpringCloud、Redis、Docker、Zookeeper
 
